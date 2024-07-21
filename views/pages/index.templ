@@ -1,0 +1,14 @@
+package pages
+
+import (
+	l "github.com/sammyshear/trivia-chase/views/layout"
+)
+
+templ Home() {
+	@l.BaseLayout(l.PageInfo{Title: "Trivia Chase"}) {
+		<div @click.capture="console.log('I will log first')" x-data="">
+			Hello, World!
+			<button @click="console.log('I will log second')" class="bg-green-200 p-5">Hello!</button>
+		</div>
+	}
+}

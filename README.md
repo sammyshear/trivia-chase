@@ -1,3 +1,3 @@
-# trivia-chase
+# Trivia Chase
 
-Trivial Pursuit inspired game using HTMX and Go.
+Trivia game using HTMX and Go.

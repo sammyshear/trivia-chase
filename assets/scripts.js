@@ -1,7 +1,8 @@
-import 'htmx.org'
+import htmx from 'htmx.org'
 import Alpine from 'alpinejs'
 
-// Add Alpine instance to window object.
+// Add Alpine and htmx instance to window object.
+window.htmx = htmx
 window.Alpine = Alpine
 
 // Start Alpine.

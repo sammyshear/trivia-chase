@@ -6,9 +6,87 @@ import (
 
 templ Home() {
 	@l.BaseLayout(l.PageInfo{Title: "Trivia Chase"}) {
-		<div @click.capture="console.log('I will log first')" x-data="">
-			Hello, World!
-			<button @click="console.log('I will log second')" class="bg-green-200 p-5">Hello!</button>
+		<div
+			class="flex w-full h-full justify-center items-center flex-col"
+			x-data="{ rolled: false, die: 'one', faces: ['one', 'two', 'three', 'four', 'five', 'six'], categories: { one: 17, two: 23, three: 25, four: 22, five: 24, six: 9 }, session: '', score: 0 }"
+			x-init="$watch('rolled', value => {
+        if (rolled) {
+            window.htmx.process(document.querySelector('main#question'))
+            window.htmx.process(document.querySelectorAll('#answer'))
+        }
+    })"
+		>
+			<span x-text="`Score: ${score}`"></span>
+			<label>Session ID:</label>
+			<span
+				hx-get="/api/session"
+				hx-trigger="load once"
+				hx-swap="innerHTML"
+				@htmx:before-swap.camel="session = $event.detail.xhr.response"
+			></span>
+			<button class=" flex" @click="die = faces[Math.floor((Math.random() * 5) + 1)]; rolled = true;">
+				<img :src="die && `/static/dice-six-faces-${die}.svg`" class="w-20 h-20"/>
+			</button>
+			<template x-if="rolled">
+				<main
+					class="flex flex-col"
+					id="question"
+					x-data="{ question: {}, answered: false }"
+					@htmx:before-swap.camel="question = JSON.parse($event.detail.xhr.response); $dispatch('updateAnswers', { answers: [...question.incorrect_answers, question.correct_answer ] } );"
+				>
+					<span
+						hx-post="/api/question"
+						hx-trigger="load once"
+						hx-ext="json-enc"
+						:hx-vals="JSON.stringify({'token': session, 'category': categories[die]})"
+						hx-swap="none"
+					></span>
+					<span id="#question" x-html="question.question"></span>
+					<form
+						x-data="{ answers: [] }"
+						@update-answers.camel.window="answers = $event.detail.answers;"
+						hx-post="/api/answer"
+						:hx-vals="JSON.stringify({question})"
+						hx-ext="json-enc"
+						@htmx:before-swap.camel.self="answered = true; if ($event.detail.xhr.response == 'Correct!') score++;"
+					>
+						<template x-if="answers[0]">
+							<input type="radio" name="answer" id="answer" :value="answers[0]"/>
+						</template>
+						<template x-if="answers">
+							<label for="answer" x-html="answers[0]"></label>
+						</template>
+						<br/>
+						<template x-if="answers[1]">
+							<input type="radio" name="answer" id="answer" :value="answers[1]"/>
+						</template>
+						<template x-if="answers[1]">
+							<label for="answers[1]" x-html="answers[1]"></label>
+						</template>
+						<br/>
+						<template x-if="answers[2]">
+							<input type="radio" name="answer" id="answer" :value="answers[2]"/>
+						</template>
+						<template x-if="answers[2]">
+							<label for="answer" x-html="answers[2]"></label>
+						</template>
+						<br/>
+						<template x-if="answers[3]">
+							<input type="radio" name="answer" id="answer" :value="answers[3]"/>
+						</template>
+						<template x-if="answers[3]">
+							<label for="answer" x-html="answers[3]"></label>
+						</template>
+						<br/>
+						<template x-if="answers.length > 0">
+							<button type="submit">Submit Answer</button>
+						</template>
+					</form>
+					<template x-if="answered">
+						<button @click="answered = false; rolled = false;">Next Question</button>
+					</template>
+				</main>
+			</template>
 		</div>
 	}
 }

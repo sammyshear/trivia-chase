@@ -2,7 +2,12 @@ package api
 
 type QuestionReq struct {
 	Token    string `json:"token"`
-	Category uint   `json:"category"`
+	Category string `json:"category"`
+}
+
+type AnswerReq struct {
+	Answer   string `json:"answer"`
+	Question string `json:"question"`
 }
 
 type QuestionResp struct {
@@ -15,8 +20,8 @@ type TextQuestion struct {
 	Question         string   `json:"question"`
 	CorrectAnswer    string   `json:"correct_answer"`
 	Type             string   `json:"type"`
+	Category         string   `json:"category"`
 	IncorrectAnswers []string `json:"incorrect_answers"`
-	Category         uint     `json:"category"`
 }
 
 type SessionResp struct {

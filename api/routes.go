@@ -18,6 +18,7 @@ func NewRoutes() *http.ServeMux {
 	// api routes
 	mux.HandleFunc("POST /api/question", GetQuestion)
 	mux.HandleFunc("GET /api/session", OpenSession)
+	mux.HandleFunc("POST /api/answer", AnswerQuestion)
 
 	return mux
 }

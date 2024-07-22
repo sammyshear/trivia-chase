@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 func OpenSession(w http.ResponseWriter, r *http.Request) {
@@ -26,21 +29,28 @@ func OpenSession(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("content-type", "text/plain")
 	w.Write([]byte(session.Token))
-	w.WriteHeader(200)
 }
 
 func GetQuestion(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	req, err := io.ReadAll(r.Body)
+	params, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error parsing request body: %s", err), 421)
 		return
 	}
 
 	var body QuestionReq
-	json.Unmarshal(req, &body)
+	err = json.Unmarshal(params, &body)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+	}
+	category, err := strconv.Atoi(body.Category)
+	if err != nil {
+		http.Error(w, "Error parsing category", 500)
+		return
+	}
 
-	res, err := http.Get(fmt.Sprintf("https://opentdb.com/api.php?amount=1&category=%d&type=multiple&token=%s", body.Category, body.Token))
+	res, err := http.Get(fmt.Sprintf("https://opentdb.com/api.php?amount=1&category=%d&type=multiple&token=%s", category, body.Token))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to request questions: %s", err), 500)
 		return
@@ -61,9 +71,43 @@ func GetQuestion(w http.ResponseWriter, r *http.Request) {
 	result, err := json.Marshal(questionResp.Results[len(questionResp.Results)-1])
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error encoding question: %s", err), 500)
+		return
 	}
 
 	w.Header().Add("content-type", "application/json")
 	w.Write(result)
-	w.WriteHeader(200)
+}
+
+func AnswerQuestion(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	params, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	log.Print(string(params))
+
+	var body AnswerReq
+	err = json.Unmarshal(params, &body)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	var question TextQuestion
+	err = json.Unmarshal([]byte(body.Question), &question)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Add("content-type", "text/plain")
+	log.Printf("Body: %v", body)
+	log.Printf("Answer: %s, CorrectAnswer: %s", body.Answer, question.CorrectAnswer)
+	if strings.Compare(body.Answer, question.CorrectAnswer) != 0 {
+		w.Write([]byte("Incorrect!"))
+		return
+	}
+
+	w.Write([]byte("Correct!"))
 }

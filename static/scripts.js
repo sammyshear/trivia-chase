@@ -6784,6 +6784,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
   var module_default = src_default;
 
   // assets/scripts.js
+  window.htmx = htmx_esm_default;
   window.Alpine = module_default;
   module_default.start();
 })();
